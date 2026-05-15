@@ -1,55 +1,78 @@
 """
-SurrealDB Client - HTTP API (No SDK, Env Variables)
+SurrealDB Client - Embedded or HTTP (No server needed)
 """
 
 import os
+# Use surrealdb SDK for embedded, aiohttp for HTTP
 import aiohttp
 
 
 class UltraDB:
-    """Unified SurrealDB client via HTTP API."""
+    """Unified SurrealDB client - supports embedded and HTTP."""
     
     def __init__(self, url: str = None, user: str = None, password: str = None):
-        # All configurable via env vars
-        # Local: http://localhost:8000
-        # Cloud: https://your-instance.surreal.cloud
-        self.url = url or os.getenv("SURREALDB_URL", "http://localhost:8000")
+        # Modes: mem://, rocksdb://, file://, http://, https://
+        self.url = url or os.getenv("SURREALDB_URL", "mem://")
         self.user = user or os.getenv("SURREALDB_USER", "root")
         self.password = password or os.getenv("SURREALDB_PASSWORD", "root")
         self.namespace = os.getenv("SURREALDB_NS", "ultrarag")
         self.database = os.getenv("SURREALDB_DB", "ultrarag")
-        self._session = None
+        
+        # Determine mode
+        self._embedded = self.url.startswith(("mem://", "rocksdb://", "file://", "surrealkv://"))
+        self._db = None  # Embedded client
+        self._session = None  # HTTP client
         self._token = None
     
     async def connect(self):
-        """Connect via HTTP."""
-        self._session = aiohttp.ClientSession()
-        resp = await self._session.post(
-            f"{self.url}/signin",
-            json={"username": self.user, "password": self.password}
-        )
-        data = await resp.json()
-        self._token = data.get("token")
+        """Connect - auto-detect embedded vs HTTP."""
+        if self._embedded:
+            # Use SDK (embedded)
+            from surrealdb import AsyncSurreal
+            self._db = AsyncSurreal(self.url)
+            await self._db.connect()
+            await self._db.use(self.namespace, self.database)
+            if self.url != "mem://":
+                await self._db.authenticate(self.user, self.password)
+        else:
+            # Use HTTP API
+            self._session = aiohttp.ClientSession()
+            resp = await self._session.post(
+                f"{self.url}/signin",
+                json={"username": self.user, "password": self.password}
+            )
+            data = await resp.json()
+            self._token = data.get("token")
+        
         return self
     
     async def close(self):
-        if self._session:
+        """Close connection."""
+        if self._db:
+            await self._db.close()
+        elif self._session:
             await self._session.close()
     
     async def use(self, namespace: str, database: str):
         """Select namespace/db."""
-        self.namespace = namespace
-        self.database = database
+        if self._db:
+            await self._db.use(namespace, database)
+        else:
+            self.namespace = namespace
+            self.database = database
     
     async def query(self, sql: str, vars: dict = None):
         """Execute SQL query."""
-        headers = {"Authorization": f"Bearer {self._token}"} if self._token else {}
-        resp = await self._session.post(
-            f"{self.url}/api/{self.namespace}/{self.database}",
-            headers=headers,
-            json={"query": sql, "vars": vars or {}}
-        )
-        return await resp.json()
+        if self._db:
+            return await self._db.query(sql, vars or {})
+        else:
+            headers = {"Authorization": f"Bearer {self._token}"} if self._token else {}
+            resp = await self._session.post(
+                f"{self.url}/api/{self.namespace}/{self.database}",
+                headers=headers,
+                json={"query": sql, "vars": vars or {}}
+            )
+            return await resp.json()
     
     async def create(self, table: str, data: dict):
         """Create record."""
