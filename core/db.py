@@ -1,28 +1,27 @@
 """
-SurrealDB Client - HTTP API (Simpler, No SDK needed)
+SurrealDB Client - HTTP API (No SDK, Env Variables)
 """
 
 import os
 import aiohttp
-from typing import Optional
 
 
 class UltraDB:
     """Unified SurrealDB client via HTTP API."""
     
     def __init__(self, url: str = None, user: str = None, password: str = None):
+        # All configurable via env vars
         self.url = url or os.getenv("SURREALDB_URL", "http://localhost:8000")
         self.user = user or os.getenv("SURREALDB_USER", "root")
         self.password = password or os.getenv("SURREALDB_PASSWORD", "root")
-        self.namespace = os.getenv("SURREALDB_NAMESPACE", "ultrarag")
-        self.database = os.getenv("SURREALDB_DATABASE", "ultrarag")
+        self.namespace = os.getenv("SURREALDB_NS", "ultrarag")
+        self.database = os.getenv("SURREALDB_DB", "ultrarag")
         self._session = None
         self._token = None
     
     async def connect(self):
         """Connect via HTTP."""
         self._session = aiohttp.ClientSession()
-        # Sign in
         resp = await self._session.post(
             f"{self.url}/signin",
             json={"username": self.user, "password": self.password}
@@ -32,7 +31,6 @@ class UltraDB:
         return self
     
     async def close(self):
-        """Close connection."""
         if self._session:
             await self._session.close()
     
