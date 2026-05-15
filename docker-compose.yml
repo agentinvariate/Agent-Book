@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  # UltraRAG App (embedded SurrealDB - no server needed)
+  ultrarag:
+    build: .
+    ports:
+      - "8001:8001"
+    environment:
+      - SURREALDB_URL=mem://
+      - LLM_PROVIDER=ollama
+      - LLM_MODEL=llama3.2
+      - LLM_BASE_URL=http://host.docker.internal:11434
+    volumes:
+      - ./data:/data
+
+  # Optional: Ollama for local LLM
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+    profiles:
+      - llm
+
+  # Optional: SurrealDB HTTP (if not embedded)
+  # surrealdb:
+  #   image: surrealdb/surrealdb:latest
+  #   ports:
+  #     - "8000:8000"
+  #   profiles:
+  #     - db
+
+volumes:
+  ollama:
