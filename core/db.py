@@ -1,5 +1,22 @@
 """
-SurrealDB Client - Embedded or HTTP
+SurrealDB Client - Embedded or HTTP.
+
+Supports multiple connection modes:
+- mem://         - In-memory, fastest, no persistence
+- rocksdb://db   - File-based, persistent
+- http://host   - HTTP server (local or cloud)
+- https://...   - HTTPS (cloud)
+
+Example:
+    # Embedded
+    db = UltraDB("mem://")
+    await db.connect()
+    await db.init_all()
+    
+    # HTTP
+    db = UltraDB("http://localhost:8000")
+    await db.connect()
+
 Docs: https://surrealdb.com/docs/build/embedding/by-language/python
 """
 
@@ -8,10 +25,27 @@ import os
 import aiohttp
 
 
+
 class UltraDB:
-    """Unified SurrealDB client - supports embedded and HTTP."""
+    """
+    Unified SurrealDB client.
+    
+    Attributes:
+        url: Connection URL (mem://, rocksdb://, http://, https://)
+        user: Username for auth
+        password: Password for auth
+        namespace: Database namespace
+        database: Database name
+    """
     
     def __init__(self, url: str = None, user: str = None, password: str = None):
+        """Initialize UltraDB client.
+        
+        Args:
+            url: Connection URL. Default: mem:// (in-memory)
+            user: Username. Default: root
+            password: Password. Default: root
+        """
         # Modes: mem://, rocksdb://, file://, http://, https://
         self.url = url or os.getenv("SURREALDB_URL", "mem://")
         self.user = user or os.getenv("SURREALDB_USER", "root")
@@ -26,7 +60,13 @@ class UltraDB:
         self._token = None
     
     async def connect(self):
-        """Connect - auto-detect embedded vs HTTP."""
+        """Connect to SurrealDB.
+        
+        Automatically detects embedded vs HTTP mode.
+        
+        Returns:
+            self: Connected UltraDB instance
+        """
         if self._embedded:
             # Use SDK (embedded)
             from surrealdb import AsyncSurreal
@@ -48,14 +88,19 @@ class UltraDB:
         return self
     
     async def close(self):
-        """Close connection."""
+        """Close connection and cleanup resources."""
         if self._db:
             await self._db.close()
         elif self._session:
             await self._session.close()
     
     async def use(self, namespace: str, database: str):
-        """Select namespace/db."""
+        """Select namespace and database.
+        
+        Args:
+            namespace: Namespace name
+            database: Database name
+        """
         if self._db:
             await self._db.use(namespace, database)
         else:
@@ -63,7 +108,15 @@ class UltraDB:
             self.database = database
     
     async def query(self, sql: str, vars: dict = None):
-        """Execute SQL query."""
+        """Execute SurrealQL query.
+        
+        Args:
+            sql: SurrealQL query string
+            vars: Query variables (optional)
+            
+        Returns:
+            Query result as dict/list
+        """
         if self._db:
             return await self._db.query(sql, vars or {})
         else:
@@ -76,21 +129,49 @@ class UltraDB:
             return await resp.json()
     
     async def create(self, table: str, data: dict):
-        """Create record."""
+        """Create a record.
+        
+        Args:
+            table: Table name
+            data: Record data as dict
+            
+        Returns:
+            Created record
+        """
         return await self.query(f"CREATE {table} CONTENT $data", {"data": data})
     
     async def select(self, table: str):
-        """Select all records."""
+        """Select all records from table.
+        
+        Args:
+            table: Table name
+            
+        Returns:
+            List of records
+        """
         return await self.query(f"SELECT * FROM {table}")
     
     async def update(self, id: str, data: dict):
-        """Update record."""
+        """Update a record by ID.
+        
+        Args:
+            id: Record ID
+            data: New data
+            
+        Returns:
+            Updated record
+        """
         return await self.query(f"UPDATE {id} CONTENT $data", {"data": data})
     
     # ============ Vector (HNSW) ============
     
     async def create_vector_table(self, table: str, dim: int = 768):
-        """Create table with HNSW index."""
+        """Create table with HNSW vector index.
+        
+        Args:
+            table: Table name
+            dim: Embedding dimension (default: 768)
+        """
         await self.query(f"""
             DEFINE TABLE {table} SCHEMAFULL;
             DEFINE FIELD content ON {table} TYPE string;
@@ -100,7 +181,14 @@ class UltraDB:
         """)
     
     async def insert_chunk(self, table: str, content: str, embedding: list, metadata: dict = None):
-        """Insert chunk with vector."""
+        """Insert chunk with vector embedding.
+        
+        Args:
+            table: Table name
+            content: Text content
+            embedding: Vector embedding
+            metadata: Optional metadata dict
+        """
         return await self.create(table, {
             "content": content,
             "embedding": embedding,
@@ -108,7 +196,16 @@ class UltraDB:
         })
     
     async def search_vectors(self, table: str, query_embedding: list, limit: int = 10):
-        """Vector search."""
+        """Search by vector similarity.
+        
+        Args:
+            table: Table name
+            query_embedding: Query vector
+            limit: Number of results
+            
+        Returns:
+            List of similar records
+        """
         return await self.query(f"""
             SELECT * FROM {table}
             ORDER BY embedding <-> $embedding
@@ -118,7 +215,7 @@ class UltraDB:
     # ============ Graph (Relations) ============
     
     async def create_entity_table(self):
-        """Create entity table."""
+        """Create entity table for knowledge graph."""
         await self.query("""
             DEFINE TABLE entity SCHEMAFULL;
             DEFINE FIELD name ON entity TYPE string;
@@ -127,7 +224,7 @@ class UltraDB:
         """)
     
     async def create_relation_table(self):
-        """Create relation table."""
+        """Create relation edges table."""
         await self.query("""
             DEFINE TABLE relation SCHEMAFULL;
             DEFINE FIELD from ON relation TYPE record(entity);
@@ -137,7 +234,13 @@ class UltraDB:
         """)
     
     async def create_entity(self, name: str, entity_type: str, properties: dict = None):
-        """Create entity."""
+        """Create entity node.
+        
+        Args:
+            name: Entity name
+            entity_type: Entity type
+            properties: Optional properties
+        """
         return await self.create("entity", {
             "name": name,
             "type": entity_type,
@@ -145,7 +248,14 @@ class UltraDB:
         })
     
     async def create_relation(self, from_id: str, to_id: str, rel_type: str, weight: float = 1.0):
-        """Create relation."""
+        """Create relation edge.
+        
+        Args:
+            from_id: Source entity ID
+            to_id: Target entity ID
+            rel_type: Relation type
+            weight: Edge weight
+        """
         return await self.create("relation", {
             "from": from_id,
             "to": to_id,
@@ -154,7 +264,15 @@ class UltraDB:
         })
     
     async def get_graph(self, entity_id: str, depth: int = 2):
-        """Get subgraph."""
+        """Get subgraph around entity.
+        
+        Args:
+            entity_id: Center entity ID
+            depth: Search depth
+            
+        Returns:
+            List of relations
+        """
         return await self.query(f"""
             SELECT * FROM relation
             WHERE from = $entity_id OR to = $entity_id
@@ -173,7 +291,14 @@ class UltraDB:
         """)
     
     async def insert_document(self, title: str, content: str, source: str = None, metadata: dict = None):
-        """Insert document."""
+        """Insert document.
+        
+        Args:
+            title: Document title
+            content: Document text
+            source: Source URL/path
+            metadata: Additional metadata
+        """
         return await self.create("document", {
             "title": title,
             "content": content,
@@ -182,7 +307,16 @@ class UltraDB:
         })
     
     async def search_fulltext(self, table: str, query: str, limit: int = 10):
-        """Full-text search."""
+        """Full-text search.
+        
+        Args:
+            table: Table name
+            query: Search query
+            limit: Max results
+            
+        Returns:
+            Matching records
+        """
         return await self.query(f"""
             SELECT * FROM {table}
             WHERE content @1@ $query
@@ -192,7 +326,7 @@ class UltraDB:
     # ============ Chats ============
     
     async def create_chat_table(self):
-        """Create chat table."""
+        """Create chat history table."""
         await self.query("""
             DEFINE TABLE chat SCHEMAFULL;
             DEFINE FIELD messages ON chat TYPE array;
@@ -200,21 +334,32 @@ class UltraDB:
         """)
     
     async def create_chat(self):
-        """Create new chat."""
+        """Create new chat session."""
         return await self.create("chat", {"messages": [], "context": {}})
     
     async def add_message(self, chat_id: str, role: str, content: str, sources: list = None):
-        """Add message."""
+        """Add message to chat.
+        
+        Args:
+            chat_id: Chat ID
+            role: user/assistant
+            content: Message content
+            sources: Source references
+        """
         return await self.update(chat_id, {
             "messages": {"role": role, "content": content, "sources": sources or []}
         })
     
     async def delete_table(self, table: str):
-        """Delete a table."""
+        """Drop a table.
+        
+        Args:
+            table: Table name
+        """
         return await self.query(f"REMOVE TABLE {table}")
     
     async def delete_all(self):
-        """Delete all data (keep tables)."""
+        """Delete all records (keep tables)."""
         await self.query("DELETE FROM chunk")
         await self.query("DELETE FROM entity")
         await self.query("DELETE FROM relation")

@@ -1,5 +1,6 @@
 """
-Multimodal ETL - PDF, Images, Audio (RAG-Anything inspired)
+Multimodal ETL - PDF, Images, Audio
+Inspired: https://github.com/RAGFlow/RAG-Anything
 """
 
 import os

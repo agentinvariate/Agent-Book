@@ -1,5 +1,6 @@
 """
-LLM Orchestrator - Multiple providers (LangChain)
+LLM Orchestrator - Multiple providers
+Docs: https://python.langchain.com/docs/integrations/llms/
 """
 
 import os

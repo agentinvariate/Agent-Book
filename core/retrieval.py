@@ -1,5 +1,6 @@
 """
-Dual-Level Retrieval - Entity + Semantic (LightRAG inspired)
+Dual-Level Retrieval - Entity + Semantic
+Inspired: https://github.com.com/MiniMaxAI/LightRAG
 """
 
 from .db import UltraDB

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-FastAPI Backend - REST API + WebSocket Chat
+FastAPI Backend - REST API + WebSocket
+Docs: https://fastapi.tiangolo.com
 """
 
 import asyncio
