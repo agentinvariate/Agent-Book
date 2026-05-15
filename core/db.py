@@ -11,7 +11,7 @@ class UltraDB:
     
     def __init__(self, url: str = None, user: str = None, password: str = None):
         # All configurable via env vars
-        self.url = url or os.getenv("SURREALDB_URL", "http://localhost:8000")
+        self.url = url or os.getenv("SURREALDB_URL", "https://your-instance.surreal.cloud")
         self.user = user or os.getenv("SURREALDB_USER", "root")
         self.password = password or os.getenv("SURREALDB_PASSWORD", "root")
         self.namespace = os.getenv("SURREALDB_NS", "ultrarag")
