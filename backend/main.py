@@ -188,13 +188,13 @@ async def get_graph(entity_id: str = None, depth: int = 2):
         return await app_state.db.get_graph(entity_id, depth)
     
     # Get all entities
-    return await app_state.db._db.query("SELECT * FROM entity LIMIT 50")
+    return await app_state.db.query("SELECT * FROM entity LIMIT 50")
 
 
 @app.get("/entities")
 async def list_entities(limit: int = 50):
     """List all entities."""
-    return await app_state.db._db.query(f"SELECT * FROM entity LIMIT {limit}")
+    return await app_state.db.query(f"SELECT * FROM entity LIMIT {limit}")
 
 
 @app.post("/entity")
@@ -207,7 +207,7 @@ async def create_entity(name: str, entity_type: str, properties: dict = None):
 @app.get("/documents")
 async def list_documents(limit: int = 20):
     """List documents."""
-    return await app_state.db._db.query(f"SELECT * FROM document LIMIT {limit}")
+    return await app_state.db.query(f"SELECT * FROM document LIMIT {limit}")
 
 
 # ============ Run ============

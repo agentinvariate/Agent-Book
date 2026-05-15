@@ -41,7 +41,7 @@ class Retriever:
         # Find related entities
         results = []
         for kw in keywords[:5]:
-            entities = await self.db._db.query("""
+            entities = await self.db.query("""
                 SELECT * FROM entity
                 WHERE name CONTAINS $kw
                 LIMIT 3
