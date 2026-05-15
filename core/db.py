@@ -1,41 +1,73 @@
 """
-SurrealDB Client - Native HNSW + Graph + KV
+SurrealDB Client - HTTP API (Simpler, No SDK needed)
 """
 
 import os
-from surrealdb import Surreal
-from surrealdb.engine import RemoteEngine
+import aiohttp
+from typing import Optional
 
 
 class UltraDB:
-    """Unified SurrealDB client for vectors, graph, and documents."""
+    """Unified SurrealDB client via HTTP API."""
     
     def __init__(self, url: str = None, user: str = None, password: str = None):
-        self.url = url or os.getenv("SURREALDB_URL", "ws://localhost:8000")
+        self.url = url or os.getenv("SURREALDB_URL", "http://localhost:8000")
         self.user = user or os.getenv("SURREALDB_USER", "root")
         self.password = password or os.getenv("SURREALDB_PASSWORD", "root")
         self.namespace = os.getenv("SURREALDB_NAMESPACE", "ultrarag")
         self.database = os.getenv("SURREALDB_DATABASE", "ultrarag")
-        self._db = None
+        self._session = None
+        self._token = None
     
     async def connect(self):
-        """Connect to SurrealDB."""
-        self._db = Surreal(RemoteEngine(self.url))
-        await self._db.connect()
-        await self._db.use(self.namespace, self.database)
-        await self._db.authenticate(self.user, self.password)
+        """Connect via HTTP."""
+        self._session = aiohttp.ClientSession()
+        # Sign in
+        resp = await self._session.post(
+            f"{self.url}/signin",
+            json={"username": self.user, "password": self.password}
+        )
+        data = await resp.json()
+        self._token = data.get("token")
         return self
     
     async def close(self):
         """Close connection."""
-        if self._db:
-            await self._db.close()
+        if self._session:
+            await self._session.close()
+    
+    async def use(self, namespace: str, database: str):
+        """Select namespace/db."""
+        self.namespace = namespace
+        self.database = database
+    
+    async def query(self, sql: str, vars: dict = None):
+        """Execute SQL query."""
+        headers = {"Authorization": f"Bearer {self._token}"} if self._token else {}
+        resp = await self._session.post(
+            f"{self.url}/api/{self.namespace}/{self.database}",
+            headers=headers,
+            json={"query": sql, "vars": vars or {}}
+        )
+        return await resp.json()
+    
+    async def create(self, table: str, data: dict):
+        """Create record."""
+        return await self.query(f"CREATE {table} CONTENT $data", {"data": data})
+    
+    async def select(self, table: str):
+        """Select all records."""
+        return await self.query(f"SELECT * FROM {table}")
+    
+    async def update(self, id: str, data: dict):
+        """Update record."""
+        return await self.query(f"UPDATE {id} CONTENT $data", {"data": data})
     
     # ============ Vector (HNSW) ============
     
     async def create_vector_table(self, table: str, dim: int = 768):
-        """Create table with HNSW vector index."""
-        await self._db.query(f"""
+        """Create table with HNSW index."""
+        await self.query(f"""
             DEFINE TABLE {table} SCHEMAFULL;
             DEFINE FIELD content ON {table} TYPE string;
             DEFINE FIELD embedding ON {table} TYPE floatarray({dim});
@@ -45,15 +77,15 @@ class UltraDB:
     
     async def insert_chunk(self, table: str, content: str, embedding: list, metadata: dict = None):
         """Insert chunk with vector."""
-        return await self._db.create(table, {
+        return await self.create(table, {
             "content": content,
             "embedding": embedding,
             "metadata": metadata or {}
         })
     
     async def search_vectors(self, table: str, query_embedding: list, limit: int = 10):
-        """HNSW vector search."""
-        return await self._db.query(f"""
+        """Vector search."""
+        return await self.query(f"""
             SELECT * FROM {table}
             ORDER BY embedding <-> $embedding
             LIMIT {limit}
@@ -62,8 +94,8 @@ class UltraDB:
     # ============ Graph (Relations) ============
     
     async def create_entity_table(self):
-        """Create entity table for knowledge graph."""
-        await self._db.query("""
+        """Create entity table."""
+        await self.query("""
             DEFINE TABLE entity SCHEMAFULL;
             DEFINE FIELD name ON entity TYPE string;
             DEFINE FIELD type ON entity TYPE string;
@@ -71,8 +103,8 @@ class UltraDB:
         """)
     
     async def create_relation_table(self):
-        """Create relation edges table."""
-        await self._db.query("""
+        """Create relation table."""
+        await self.query("""
             DEFINE TABLE relation SCHEMAFULL;
             DEFINE FIELD from ON relation TYPE record(entity);
             DEFINE FIELD to ON relation TYPE record(entity);
@@ -81,16 +113,16 @@ class UltraDB:
         """)
     
     async def create_entity(self, name: str, entity_type: str, properties: dict = None):
-        """Create entity node."""
-        return await self._db.create("entity", {
+        """Create entity."""
+        return await self.create("entity", {
             "name": name,
             "type": entity_type,
             "properties": properties or {}
         })
     
     async def create_relation(self, from_id: str, to_id: str, rel_type: str, weight: float = 1.0):
-        """Create relation edge."""
-        return await self._db.create("relation", {
+        """Create relation."""
+        return await self.create("relation", {
             "from": from_id,
             "to": to_id,
             "type": rel_type,
@@ -98,38 +130,36 @@ class UltraDB:
         })
     
     async def get_graph(self, entity_id: str, depth: int = 2):
-        """Get subgraph around entity."""
-        return await self._db.query(f"""
+        """Get subgraph."""
+        return await self.query(f"""
             SELECT * FROM relation
             WHERE from = $entity_id OR to = $entity_id
         """, {"entity_id": entity_id})
     
-    # ============ Documents (KV) ============
+    # ============ Documents ============
     
     async def create_document_table(self):
         """Create document table."""
-        await self._db.query("""
+        await self.query("""
             DEFINE TABLE document SCHEMAFULL;
             DEFINE FIELD title ON document TYPE string;
             DEFINE FIELD content ON document TYPE string;
             DEFINE FIELD source ON document TYPE string;
             DEFINE FIELD metadata ON document TYPE object;
-            DEFINE FIELD created_at ON document TYPE datetime;
         """)
     
     async def insert_document(self, title: str, content: str, source: str = None, metadata: dict = None):
         """Insert document."""
-        return await self._db.create("document", {
+        return await self.create("document", {
             "title": title,
             "content": content,
             "source": source,
-            "metadata": metadata or {},
-            "created_at": await self._db.query("time::now()")
+            "metadata": metadata or {}
         })
     
     async def search_fulltext(self, table: str, query: str, limit: int = 10):
         """Full-text search."""
-        return await self._db.query(f"""
+        return await self.query(f"""
             SELECT * FROM {table}
             WHERE content @1@ $query
             LIMIT {limit}
@@ -138,30 +168,21 @@ class UltraDB:
     # ============ Chats ============
     
     async def create_chat_table(self):
-        """Create chat history table."""
-        await self._db.query("""
+        """Create chat table."""
+        await self.query("""
             DEFINE TABLE chat SCHEMAFULL;
             DEFINE FIELD messages ON chat TYPE array;
             DEFINE FIELD context ON chat TYPE object;
-            DEFINE FIELD created_at ON chat TYPE datetime;
         """)
     
     async def create_chat(self):
-        """Create new chat session."""
-        return await self._db.create("chat", {
-            "messages": [],
-            "context": {},
-            "created_at": await self._db.query("time::now()")
-        })
+        """Create new chat."""
+        return await self.create("chat", {"messages": [], "context": {}})
     
     async def add_message(self, chat_id: str, role: str, content: str, sources: list = None):
-        """Add message to chat."""
-        return await self._db.update(chat_id, {
-            "messages": {
-                "role": role,
-                "content": content,
-                "sources": sources or []
-            }
+        """Add message."""
+        return await self.update(chat_id, {
+            "messages": {"role": role, "content": content, "sources": sources or []}
         })
     
     # ============ Init ============
@@ -173,4 +194,4 @@ class UltraDB:
         await self.create_relation_table()
         await self.create_document_table()
         await self.create_chat_table()
-        return "Initialized all tables"
+        return "Initialized"
