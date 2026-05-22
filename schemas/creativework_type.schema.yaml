@@ -1,0 +1,89 @@
+title: CreativeWorkType
+version: 0.1
+
+description: |
+  Normalized internal representation of a schema.org CreativeWork subtype.
+
+  This schema lets Agent Book use schema.org CreativeWork as the base ontology
+  while extending it with enterprise artifact generation metadata.
+
+type: object
+
+required:
+  - id
+  - label
+  - schema_org_type
+  - base_type
+
+properties:
+  id:
+    type: string
+    description: Internal stable identifier, e.g. schema:Report.
+
+  label:
+    type: string
+    description: Human-readable type label.
+
+  schema_org_type:
+    type: string
+    description: Canonical schema.org type URL or CURIE.
+
+  base_type:
+    type: string
+    description: Base type. For this ontology it should descend from schema:CreativeWork.
+
+  parent_types:
+    type: array
+    items:
+      type: string
+
+  child_types:
+    type: array
+    items:
+      type: string
+
+  description:
+    type: string
+
+  schema_properties:
+    type: array
+    description: Relevant schema.org properties for this CreativeWork type.
+    items:
+      type: string
+
+  agentbook_extensions:
+    type: object
+    description: Enterprise artifact generation metadata.
+    properties:
+      compatible_artifact_patterns:
+        type: array
+        items:
+          type: string
+      compatible_business_processes:
+        type: array
+        items:
+          type: string
+      default_output_formats:
+        type: array
+        items:
+          type: string
+      evidence_required:
+        type: boolean
+      governance_required:
+        type: boolean
+      validation_profiles:
+        type: array
+        items:
+          type: string
+
+  source:
+    type: string
+    description: Ontology source, e.g. schema.org.
+
+  status:
+    type: string
+    enum:
+      - imported
+      - normalized
+      - extended
+      - deprecated
