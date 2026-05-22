@@ -1,0 +1,70 @@
+id: product_comparison_article
+family: content_marketing_product_education
+name: Product Comparison Article
+
+job_to_be_done:
+  Help buyers compare products or vendors and make a confident decision based on fit, features, tradeoffs, evidence, and positioning.
+
+required_inputs:
+  - primary_product
+  - comparison_products
+  - buyer_persona
+  - evaluation_criteria
+  - source_corpus
+
+optional_inputs:
+  - pricing_information
+  - customer_reviews
+  - competitor_pages
+  - analyst_mentions
+  - seo_keywords
+  - brand_guidelines
+  - approved_positioning
+
+workflow:
+  - ingest_sources
+  - extract_product_claims
+  - extract_comparison_criteria
+  - map_features_to_buyer_needs
+  - identify_strengths_and_gaps
+  - generate_comparison_table
+  - generate_recommendations
+  - validate_claims
+  - generate_article
+  - generate_derivative_assets
+
+sections:
+  - title_options
+  - search_intent
+  - introduction
+  - buyer_context
+  - evaluation_criteria
+  - product_overviews
+  - feature_comparison
+  - strengths_and_limitations
+  - best_fit_recommendations
+  - migration_or_switching_notes
+  - final_recommendation
+  - call_to_action
+  - sources
+
+outputs:
+  - markdown_article
+  - html_article
+  - comparison_table
+  - seo_metadata
+  - social_snippets
+  - sales_enablement_summary
+
+validators:
+  - citation_check
+  - competitive_claim_check
+  - unsupported_claim_detection
+  - brand_voice_check
+  - seo_intent_check
+
+governance:
+  citations_required_for_competitive_claims: true
+  approved_positioning_required: true
+  unsupported_superlatives_blocked: true
+  confidence_scores_required: true
