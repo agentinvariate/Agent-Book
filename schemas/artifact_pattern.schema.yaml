@@ -1,0 +1,77 @@
+title: ArtifactPattern
+version: 0.1
+
+description: |
+  Registry schema for enterprise artifact patterns.
+
+  ArtifactPattern connects schema.org CreativeWork base types to
+  Agent Book workflows, evidence requirements, validation rules,
+  governance, and export targets.
+
+type: object
+
+required:
+  - id
+  - family
+  - name
+  - compatible_creativework_types
+  - workflow
+  - outputs
+
+properties:
+  id:
+    type: string
+
+  family:
+    type: string
+
+  name:
+    type: string
+
+  compatible_creativework_types:
+    type: array
+    description: schema.org CreativeWork subtype ids compatible with this pattern.
+    items:
+      type: string
+
+  job_to_be_done:
+    type: string
+
+  required_inputs:
+    type: array
+    items:
+      type: string
+
+  optional_inputs:
+    type: array
+    items:
+      type: string
+
+  workflow:
+    type: array
+    items:
+      type: string
+
+  sections:
+    type: array
+    items:
+      type: string
+
+  outputs:
+    type: array
+    items:
+      type: string
+
+  validators:
+    type: array
+    items:
+      type: string
+
+  governance:
+    type: object
+
+  derivative_patterns:
+    type: array
+    description: Other artifact patterns that can be generated from this pattern.
+    items:
+      type: string
