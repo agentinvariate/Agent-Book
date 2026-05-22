@@ -1,0 +1,167 @@
+types:
+  - id: schema:CreativeWork
+    label: CreativeWork
+    schema_org_type: https://schema.org/CreativeWork
+    base_type: schema:CreativeWork
+    parent_types: []
+    child_types:
+      - schema:Article
+      - schema:Report
+      - schema:DigitalDocument
+      - schema:LearningResource
+      - schema:MediaObject
+      - schema:HowTo
+      - schema:Course
+      - schema:Review
+      - schema:WebPage
+    description: Base CreativeWork type.
+    schema_properties:
+      - name
+      - description
+      - author
+      - creator
+      - publisher
+      - audience
+      - citation
+      - keywords
+      - about
+      - abstract
+      - dateCreated
+      - dateModified
+    source: schema.org
+    status: normalized
+
+  - id: schema:Report
+    label: Report
+    schema_org_type: https://schema.org/Report
+    base_type: schema:CreativeWork
+    parent_types:
+      - schema:CreativeWork
+    child_types: []
+    description: Enterprise or research report.
+    schema_properties:
+      - headline
+      - abstract
+      - citation
+      - author
+      - about
+    agentbook_extensions:
+      compatible_artifact_patterns:
+        - state_of_report
+        - benchmark_report
+        - incident_report
+      compatible_business_processes:
+        - market_intelligence
+        - governance
+        - executive_reporting
+      default_output_formats:
+        - pdf_report
+        - pptx_deck
+        - executive_memo
+      evidence_required: true
+      governance_required: true
+      validation_profiles:
+        - citation_validation
+        - evidence_quality_validation
+    source: schema.org
+    status: extended
+
+  - id: schema:Article
+    label: Article
+    schema_org_type: https://schema.org/Article
+    base_type: schema:CreativeWork
+    parent_types:
+      - schema:CreativeWork
+    child_types:
+      - schema:BlogPosting
+    description: Long-form written content.
+    schema_properties:
+      - headline
+      - articleBody
+      - keywords
+      - citation
+    agentbook_extensions:
+      compatible_artifact_patterns:
+        - product_comparison_article
+        - seo_article
+        - blog_post
+      compatible_business_processes:
+        - demand_generation
+        - product_marketing
+        - thought_leadership
+      default_output_formats:
+        - markdown_article
+        - html_article
+      evidence_required: true
+      governance_required: true
+      validation_profiles:
+        - seo_validation
+        - competitive_claim_validation
+    source: schema.org
+    status: extended
+
+  - id: schema:PresentationDigitalDocument
+    label: PresentationDigitalDocument
+    schema_org_type: https://schema.org/PresentationDigitalDocument
+    base_type: schema:CreativeWork
+    parent_types:
+      - schema:DigitalDocument
+    child_types: []
+    description: Presentation-oriented digital document.
+    schema_properties:
+      - name
+      - about
+      - creator
+    agentbook_extensions:
+      compatible_artifact_patterns:
+        - pitch_deck
+        - executive_briefing
+        - sales_deck
+      compatible_business_processes:
+        - fundraising
+        - enterprise_sales
+        - executive_communication
+      default_output_formats:
+        - pptx_deck
+        - pdf_deck
+      evidence_required: true
+      governance_required: true
+      validation_profiles:
+        - narrative_consistency_validation
+        - brand_validation
+    source: schema.org
+    status: extended
+
+  - id: schema:VideoObject
+    label: VideoObject
+    schema_org_type: https://schema.org/VideoObject
+    base_type: schema:CreativeWork
+    parent_types:
+      - schema:MediaObject
+    child_types: []
+    description: Video-based creative work.
+    schema_properties:
+      - name
+      - description
+      - transcript
+      - duration
+    agentbook_extensions:
+      compatible_artifact_patterns:
+        - product_walkthrough_video
+        - webinar
+        - customer_training_video
+      compatible_business_processes:
+        - customer_education
+        - marketing
+        - enablement
+      default_output_formats:
+        - video_script
+        - storyboard
+        - narration_script
+      evidence_required: true
+      governance_required: true
+      validation_profiles:
+        - script_consistency_validation
+        - product_claim_validation
+    source: schema.org
+    status: extended
