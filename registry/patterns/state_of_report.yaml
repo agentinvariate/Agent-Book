@@ -1,0 +1,59 @@
+id: state_of_report
+family: strategic_insight
+name: State of X Report
+
+job_to_be_done:
+  Help leaders understand the current state, trends, risks, opportunities, and future outlook of a domain or industry.
+
+required_inputs:
+  - domain
+  - audience
+  - time_period
+  - source_corpus
+
+optional_inputs:
+  - geographic_scope
+  - company_focus
+  - competitor_set
+  - analyst_notes
+  - survey_data
+
+workflow:
+  - ingest_sources
+  - extract_entities
+  - identify_trends
+  - cluster_themes
+  - synthesize_findings
+  - validate_claims
+  - generate_report
+  - generate_derivative_assets
+
+sections:
+  - executive_summary
+  - market_overview
+  - key_trends
+  - opportunities
+  - risks
+  - vendor_movements
+  - predictions
+  - recommendations
+  - methodology
+  - appendix
+
+outputs:
+  - pdf_report
+  - pptx_deck
+  - executive_memo
+  - blog_series
+  - webinar_script
+
+validators:
+  - citation_check
+  - evidence_quality_check
+  - contradiction_detection
+  - unsupported_claim_detection
+
+governance:
+  citations_required: true
+  confidence_scores_required: true
+  evidence_traceability_required: true
