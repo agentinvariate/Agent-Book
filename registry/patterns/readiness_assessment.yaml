@@ -1,0 +1,66 @@
+id: readiness_assessment
+family: framework_driven_assessment
+name: Readiness Assessment
+
+job_to_be_done:
+  Evaluate whether an organization, team, process, or technology is ready for adoption, implementation, scaling, or transformation.
+
+required_inputs:
+  - assessment_domain
+  - target_organization
+  - assessment_framework
+  - user_responses
+
+optional_inputs:
+  - uploaded_evidence
+  - maturity_model
+  - scoring_weights
+  - compliance_requirements
+  - stakeholder_notes
+  - benchmark_data
+
+workflow:
+  - validate_framework
+  - ingest_responses
+  - ingest_evidence
+  - calculate_scores
+  - identify_gaps
+  - generate_findings
+  - generate_recommendations
+  - generate_roadmap
+  - generate_executive_outputs
+
+sections:
+  - executive_summary
+  - readiness_score
+  - maturity_level
+  - strengths
+  - weaknesses
+  - gap_analysis
+  - risks
+  - recommendations
+  - implementation_roadmap
+  - evidence_summary
+  - methodology
+
+outputs:
+  - assessment_report_pdf
+  - executive_pptx
+  - scorecard
+  - roadmap
+  - risk_register
+  - recommendation_matrix
+  - radar_chart_data
+
+validators:
+  - scoring_consistency_check
+  - evidence_traceability_check
+  - contradiction_detection
+  - missing_evidence_detection
+  - recommendation_alignment_check
+
+governance:
+  explainable_scores_required: true
+  evidence_linking_required: true
+  audit_log_required: true
+  confidence_scores_required: true
