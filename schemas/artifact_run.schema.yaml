@@ -1,0 +1,129 @@
+title: ArtifactRun
+version: 0.1
+
+description: |
+  Runtime execution object for enterprise artifact generation.
+
+  Every generated artifact in Agent Book should execute through
+  an ArtifactRun regardless of artifact family.
+
+type: object
+
+required:
+  - id
+  - pattern_id
+  - status
+  - created_at
+  - workflow_state
+
+properties:
+  id:
+    type: string
+    description: Unique runtime identifier.
+
+  pattern_id:
+    type: string
+    description: Registry pattern identifier.
+
+  family:
+    type: string
+    description: Artifact family.
+
+  title:
+    type: string
+
+  objective:
+    type: string
+
+  audience:
+    type: array
+    items:
+      type: string
+
+  inputs:
+    type: object
+    description: User-provided structured inputs.
+
+  evidence:
+    type: array
+    description: Connected evidence/source references.
+    items:
+      type: object
+      properties:
+        source_id:
+          type: string
+        source_type:
+          type: string
+        title:
+          type: string
+        confidence:
+          type: number
+
+  workflow_state:
+    type: object
+    description: Execution progress for workflow steps.
+
+  generated_sections:
+    type: array
+    items:
+      type: object
+      properties:
+        section_id:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        citations:
+          type: array
+          items:
+            type: string
+
+  validation_results:
+    type: array
+    items:
+      type: object
+      properties:
+        validator:
+          type: string
+        status:
+          type: string
+        message:
+          type: string
+        severity:
+          type: string
+
+  exports:
+    type: array
+    items:
+      type: object
+      properties:
+        format:
+          type: string
+        location:
+          type: string
+        status:
+          type: string
+
+  status:
+    type: string
+    enum:
+      - created
+      - running
+      - waiting_for_input
+      - validating
+      - completed
+      - failed
+
+  created_at:
+    type: string
+
+  updated_at:
+    type: string
+
+  created_by:
+    type: string
+
+  governance:
+    type: object
+    description: Governance and approval metadata.
