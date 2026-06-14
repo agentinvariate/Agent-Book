@@ -1,0 +1,49 @@
+id: fabricops-agent
+name: FabricOps Agent
+type: real-agent
+mission: Maintain platform integrity for VPS, k3s, Fabric, and SurrealDB.
+
+runtime:
+  engine: deepagents
+  loop:
+    - observe
+    - retrieve
+    - reason
+    - plan
+    - authorize
+    - act
+    - verify
+    - record
+    - learn
+
+scope:
+  can_observe:
+    - vps
+    - k3s
+    - fabric_namespace
+    - surrealdb
+    - systemd
+    - storage
+  can_act:
+    - restart_safe_deployment
+    - collect_logs
+    - create_incident
+    - emit_cloudevent
+    - write_evidence
+  cannot_act_without_approval:
+    - delete_namespace
+    - delete_pvc
+    - delete_database
+    - delete_node
+    - rotate_secret
+    - change_firewall
+
+trust:
+  initial_score: 20
+  autonomy_level: supervised
+
+governance:
+  default: deny
+  policy_engine: opa
+  audit_required: true
+  human_approval_required_for_irreversible_actions: true
