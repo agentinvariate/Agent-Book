@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agennext.org/schemas/event.schema.json",
+  "title": "Agent CloudEvent",
+  "type": "object",
+  "required": ["specversion", "type", "source", "id", "time", "datacontenttype", "data"],
+  "properties": {
+    "specversion": { "const": "1.0" },
+    "type": {
+      "type": "string",
+      "pattern": "^io\\.agennext\\.agent\\.[a-z0-9_.-]+$"
+    },
+    "source": { "type": "string" },
+    "id": { "type": "string" },
+    "time": { "type": "string", "format": "date-time" },
+    "subject": { "type": "string" },
+    "datacontenttype": { "const": "application/json" },
+    "data": { "type": "object" }
+  },
+  "additionalProperties": true
+}
